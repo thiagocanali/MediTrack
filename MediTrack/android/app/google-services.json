@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104432061302",
+    "project_id": "meditrack-4456e",
+    "storage_bucket": "meditrack-4456e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104432061302:android:4587522f37e6162470c857",
+        "android_client_info": {
+          "package_name": "br.com.voltzinho.MediTrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD18NOIutZzl4QcEKKVlOgFXH11fw8Uz-M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
