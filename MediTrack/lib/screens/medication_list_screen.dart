@@ -1,9 +1,10 @@
+// lib/screens/medication_list_screen.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'edit_medication_screen.dart'; // Importar a nova tela
 
 class MedicationListScreen extends StatefulWidget {
-  const MedicationListScreen({Key? key}) : super(key: key);
-
   @override
   _MedicationListScreenState createState() => _MedicationListScreenState();
 }
@@ -15,23 +16,31 @@ class _MedicationListScreenState extends State<MedicationListScreen> {
   void _addMedication() async {
     final medication = _medicationController.text;
     if (medication.isNotEmpty) {
-      try {
-        await _firestore.collection('medications').add({
-          'name': medication,
-          'timestamp': Timestamp.now(),
-        });
-        _medicationController.clear();
-      } catch (e) {
-        print('Error adding medication: $e');
-      }
+      await _firestore.collection('medications').add({
+        'name': medication,
+        'timestamp': Timestamp.now(),
+      });
+      _medicationController.clear();
     }
+  }
+
+  void _editMedication(String documentId, String currentName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditMedicationScreen(
+          documentId: documentId,
+          currentName: currentName,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Medication List'),
+        title: Text('Medication List'),
       ),
       body: Column(
         children: <Widget>[
@@ -39,7 +48,7 @@ class _MedicationListScreenState extends State<MedicationListScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _medicationController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Medication Name',
                 border: OutlineInputBorder(),
               ),
@@ -47,7 +56,7 @@ class _MedicationListScreenState extends State<MedicationListScreen> {
           ),
           ElevatedButton(
             onPressed: _addMedication,
-            child: const Text('Add Medication'),
+            child: Text('Add Medication'),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -56,7 +65,7 @@ class _MedicationListScreenState extends State<MedicationListScreen> {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: CircularProgressIndicator());
                 }
                 final medications = snapshot.data!.docs;
                 return ListView.builder(
@@ -67,6 +76,15 @@ class _MedicationListScreenState extends State<MedicationListScreen> {
                       title: Text(medication['name']),
                       subtitle:
                           Text(medication['timestamp'].toDate().toString()),
+                      trailing: IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () {
+                          _editMedication(
+                            medication.id,
+                            medication['name'],
+                          );
+                        },
+                      ),
                     );
                   },
                 );
