@@ -1,96 +1,113 @@
-// lib/screens/medication_list_screen.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'edit_medication_screen.dart'; // Importar a nova tela
+
+import 'edit_medication_screen.dart';
 
 class MedicationListScreen extends StatefulWidget {
+  const MedicationListScreen({super.key, required this.userId});
+  final String userId;
+
   @override
-  _MedicationListScreenState createState() => _MedicationListScreenState();
+  State<MedicationListScreen> createState() => _MedicationListScreenState();
 }
 
 class _MedicationListScreenState extends State<MedicationListScreen> {
-  final TextEditingController _medicationController = TextEditingController();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final _name = TextEditingController();
+  bool _saving = false;
 
-  void _addMedication() async {
-    final medication = _medicationController.text;
-    if (medication.isNotEmpty) {
-      await _firestore.collection('medications').add({
-        'name': medication,
-        'timestamp': Timestamp.now(),
+  CollectionReference<Map<String, dynamic>> get _medications =>
+      FirebaseFirestore.instance.collection('users')
+          .doc(widget.userId).collection('medications');
+
+  Future<void> _addMedication() async {
+    final name = _name.text.trim();
+    if (name.isEmpty || _saving) return;
+    setState(() => _saving = true);
+    try {
+      await _medications.add({
+        'name': name,
+        'active': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
-      _medicationController.clear();
+      _name.clear();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível salvar o medicamento.')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
-  void _editMedication(String documentId, String currentName) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditMedicationScreen(
-          documentId: documentId,
-          currentName: currentName,
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Medication List'),
+        title: const Text('Meus medicamentos'),
+        actions: [IconButton(
+          tooltip: 'Sair', icon: const Icon(Icons.logout),
+          onPressed: () => FirebaseAuth.instance.signOut(),
+        )],
       ),
       body: Column(
-        children: <Widget>[
+        children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _medicationController,
-              decoration: InputDecoration(
-                labelText: 'Medication Name',
-                border: OutlineInputBorder(),
+            padding: const EdgeInsets.all(16),
+            child: Row(children: [
+              Expanded(child: TextField(
+                controller: _name,
+                maxLength: 160,
+                decoration: const InputDecoration(labelText: 'Nome do medicamento'),
+              )),
+              IconButton(
+                tooltip: 'Adicionar',
+                onPressed: _saving ? null : _addMedication,
+                icon: const Icon(Icons.add_circle),
               ),
-            ),
+            ]),
           ),
-          ElevatedButton(
-            onPressed: _addMedication,
-            child: Text('Add Medication'),
-          ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('medications').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                final medications = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: medications.length,
-                  itemBuilder: (context, index) {
-                    final medication = medications[index];
-                    return ListTile(
-                      title: Text(medication['name']),
-                      subtitle:
-                          Text(medication['timestamp'].toDate().toString()),
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () {
-                          _editMedication(
-                            medication.id,
-                            medication['name'],
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+          Expanded(child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: _medications.orderBy('createdAt', descending: true).snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Center(child: Text('Erro ao carregar medicamentos.'));
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final docs = snapshot.data!.docs;
+              if (docs.isEmpty) {
+                return const Center(child: Text('Nenhum medicamento cadastrado.'));
+              }
+              return ListView.builder(
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final data = doc.data();
+                  return ListTile(
+                    title: Text(data['name'] as String? ?? 'Sem nome'),
+                    trailing: IconButton(
+                      tooltip: 'Editar', icon: const Icon(Icons.edit),
+                      onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => EditMedicationScreen(
+                          userId: widget.userId,
+                          documentId: doc.id,
+                          currentName: data['name'] as String? ?? '',
+                        ),
+                      )),
+                    ),
+                  );
+                },
+              );
+            },
+          )),
         ],
       ),
     );

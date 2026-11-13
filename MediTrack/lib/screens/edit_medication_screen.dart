@@ -1,200 +1,95 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 
 class EditMedicationScreen extends StatefulWidget {
-  final String documentId;
-  final String currentName;
-  final Timestamp? currentReminderTime;
-
   const EditMedicationScreen({
-    Key? key,
+    super.key,
+    required this.userId,
     required this.documentId,
     required this.currentName,
-    this.currentReminderTime,
-  }) : super(key: key);
+  });
+  final String userId;
+  final String documentId;
+  final String currentName;
 
   @override
-  _EditMedicationScreenState createState() => _EditMedicationScreenState();
+  State<EditMedicationScreen> createState() => _EditMedicationScreenState();
 }
 
 class _EditMedicationScreenState extends State<EditMedicationScreen> {
-  final TextEditingController _medicationController = TextEditingController();
-  TimeOfDay _selectedTime = TimeOfDay.now();
+  late final TextEditingController _name;
+  bool _busy = false;
+
+  DocumentReference<Map<String, dynamic>> get _doc =>
+      FirebaseFirestore.instance.collection('users')
+          .doc(widget.userId).collection('medications').doc(widget.documentId);
 
   @override
   void initState() {
     super.initState();
-    _medicationController.text = widget.currentName;
-    if (widget.currentReminderTime != null) {
-      final dateTime = widget.currentReminderTime!.toDate();
-      _selectedTime = TimeOfDay.fromDateTime(dateTime);
+    _name = TextEditingController(text: widget.currentName);
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _name.text.trim();
+    if (name.isEmpty || _busy) return;
+    setState(() => _busy = true);
+    try {
+      await _doc.update({'name': name, 'updatedAt': FieldValue.serverTimestamp()});
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível atualizar.')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
-  void _updateMedication() async {
-    final newName = _medicationController.text;
-    final newTime = _selectedTime;
-    if (newName.isNotEmpty) {
-      final now = DateTime.now();
-      final reminderDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        newTime.hour,
-        newTime.minute,
-      );
-
-      await FirebaseFirestore.instance
-          .collection('medications')
-          .doc(widget.documentId)
-          .update({
-        'name': newName,
-        'reminderTime': Timestamp.fromDate(reminderDateTime),
-      });
-
-      // Cancel any existing notifications and schedule a new one
-      _scheduleNotification(reminderDateTime);
-
-      Navigator.pop(context);
-    }
-  }
-
-  void _deleteMedication() async {
-    final bool? confirm = await showDialog(
+  Future<void> _delete() async {
+    if (_busy) return;
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete this medication?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-            ),
-            TextButton(
-              child: Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir medicamento?'),
+        content: const Text('Esta ação remove o cadastro.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir')),
+        ],
+      ),
     );
-
-    if (confirm == true) {
-      await FirebaseFirestore.instance
-          .collection('medications')
-          .doc(widget.documentId)
-          .delete();
-
-      // Cancel any existing notifications
-      _cancelNotification();
-
-      Navigator.pop(context);
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await _doc.delete();
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível excluir.')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-  }
-
-  Future<void> _selectTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
-  Future<void> _scheduleNotification(DateTime dateTime) async {
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    final InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'medication_channel',
-      'Medication Notifications',
-      channelDescription: 'Channel for medication notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      'Medication Reminder',
-      'Time to take your medication!',
-      tz.TZDateTime.from(dateTime, tz.local),
-      platformChannelSpecifics,
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  }
-
-  Future<void> _cancelNotification() async {
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
-    await flutterLocalNotificationsPlugin.cancelAll();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit Medication'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              controller: _medicationController,
-              decoration: InputDecoration(
-                labelText: 'Medication Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 16.0),
-            ListTile(
-              title: Text('Reminder Time: ${_selectedTime.format(context)}'),
-              trailing: IconButton(
-                icon: Icon(Icons.access_time),
-                onPressed: _selectTime,
-              ),
-            ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _updateMedication,
-              child: Text('Update Medication'),
-            ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _deleteMedication,
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.red, // Substitua primary por backgroundColor
-              ),
-              child: Text('Delete Medication'),
-            ),
-          ],
-        ),
-      ),
+      appBar: AppBar(title: const Text('Editar medicamento')),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        TextField(controller: _name, maxLength: 160,
+          decoration: const InputDecoration(labelText: 'Nome')),
+        FilledButton(onPressed: _busy ? null : _save, child: const Text('Salvar')),
+        TextButton(onPressed: _busy ? null : _delete,
+          child: const Text('Excluir medicamento')),
+      ]),
     );
   }
 }
