@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function allowedKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+    function requiredKeys(keys) {
+      return request.resource.data.keys().hasAll(keys);
+    }
+
+    // New owner-scoped schema. This does not grant access to the legacy
+    // top-level /medications collection; migrate only after backup and testing.
+    match /users/{uid} {
+      allow get: if owner(uid);
+      allow list: if false;
+      allow create: if owner(uid)
+        && allowedKeys(['displayName', 'createdAt', 'updatedAt'])
+        && requiredKeys(['createdAt']);
+      allow update: if owner(uid)
+        && allowedKeys(['displayName', 'createdAt', 'updatedAt'])
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if owner(uid);
+
+      match /medications/{medicationId} {
+        allow get, list: if owner(uid);
+        allow create: if owner(uid)
+          && allowedKeys(['name', 'dosage', 'instructions', 'schedule', 'stock', 'active', 'createdAt', 'updatedAt'])
+          && requiredKeys(['name', 'active', 'createdAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 160
+          && request.resource.data.active is bool
+          && (!('stock' in request.resource.data) ||
+              (request.resource.data.stock is int && request.resource.data.stock >= 0));
+        allow update: if owner(uid)
+          && allowedKeys(['name', 'dosage', 'instructions', 'schedule', 'stock', 'active', 'createdAt', 'updatedAt'])
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 160
+          && request.resource.data.active is bool
+          && (!('stock' in request.resource.data) ||
+              (request.resource.data.stock is int && request.resource.data.stock >= 0));
+        allow delete: if owner(uid);
+
+        match /doseLogs/{logId} {
+          allow get, list: if owner(uid);
+          // Dose log writes intentionally denied until the occurrence ID,
+          // timestamp and transition validation contract is implemented.
+          allow create, update, delete: if false;
+        }
+      }
+
+      // Sensitive features remain inaccessible until dedicated schema,
+      // consent and rule tests are implemented.
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
