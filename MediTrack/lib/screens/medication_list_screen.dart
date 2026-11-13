@@ -33,8 +33,8 @@ class _MedicationListScreenState extends State<MedicationListScreen> {
       });
       _name.clear();
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível salvar o medicamento.')));
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível salvar o medicamento.'))); }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
