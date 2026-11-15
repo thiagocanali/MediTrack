@@ -42,3 +42,19 @@ A organização conectada possui projetos separados para `thiagocanali-hub`, `mo
 | P1 | Projetar backend de autenticação independente | Em andamento | API_CONTRACT.md proposto; implementar protótipo e testes |
 | P1 | Provisionar Neon dedicado | Bloqueada | Avaliar capacidade do plano e confirmar ausência de duplicidade |
 | P1 | Migrar Flutter sem perda de dados | Pendente | Depende de API, autenticação e homologação |
+
+## Lote de integridade — 15/11/2026
+
+- Migration `0002_medication_name_limit.sql`: limite de 160 caracteres no banco.
+- Teste `integrity_smoke.sql`: duplicidade de ocorrência, tamanho de nome e exclusão com histórico.
+- Teste `dose_write_rls.sql`: tentativa de escrita de dose por outro usuário. **Arquivo criado; integração na CI ainda pendente**.
+- A CI existente foi atualizada para executar `0002` e `integrity_smoke.sql`; conferir checks do HEAD antes de validar.
+- `flutter analyze`, `flutter test` e builds Android/iOS não foram executados neste lote: não houve alteração Flutter e a execução conectada não disponibilizou SDK Flutter.
+
+### Próximas cinco tarefas
+
+1. P0: conferir CI do HEAD e corrigir falhas SQL.
+2. P0: incluir `dose_write_rls.sql` na CI e validar o cenário.
+3. P1: implementar camada HTTP autenticada sem expor credenciais.
+4. P1: mapear integralmente campos Firestore e regras de exclusão de dados.
+5. P1: testar concorrência de registro de doses e idempotência.
