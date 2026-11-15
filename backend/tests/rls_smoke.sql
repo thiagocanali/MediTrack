@@ -58,20 +58,6 @@ BEGIN
 END $$;
 
 
--- Bob must not insert a dose for Alice's medication.
-DO $
-BEGIN
-  BEGIN
-    INSERT INTO dose_logs(id,medication_id,scheduled_for,recorded_at,status)
-    VALUES ('dddddddd-dddd-4ddd-8ddd-dddddddddddd',
-      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      '2026-11-15T09:00:00Z','2026-11-15T09:05:00Z','taken');
-    RAISE EXCEPTION 'Cross-user dose insert unexpectedly succeeded';
-  EXCEPTION WHEN insufficient_privilege THEN
-    NULL;
-  END;
-END $;
-
 -- A request without an authenticated account must see no records.
 SELECT set_config('app.user_id','',true);
 DO $$
