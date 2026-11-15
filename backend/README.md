@@ -36,9 +36,9 @@ A organização conectada possui projetos separados para `thiagocanali-hub`, `mo
 
 | Prioridade | Tarefa | Estado | Evidência / próxima ação |
 | --- | --- | --- | --- |
-| P0 | Validar schema e RLS em PostgreSQL isolado | Em andamento | PR #13; acompanhar CI do HEAD |
+| P0 | Validar schema e RLS em PostgreSQL isolado | Validada | CI #43750752934 aprovada para HEAD 93bfca2; revalidar commits posteriores |
 | P0 | Revisar isolamento e duplicidade das doses | Em andamento | Testes RLS e índice único; ampliar casos |
-| P1 | Inventariar contratos legados Firebase | Pendente | Mapear telas, campos e migração |
-| P1 | Projetar backend de autenticação independente | Pendente | Implementar protótipo e testes sem produção |
+| P1 | Inventariar contratos legados Firebase | Em andamento | FIREBASE_CONTRACT_INVENTORY.md; ampliar para regras e doses |
+| P1 | Projetar backend de autenticação independente | Em andamento | API_CONTRACT.md proposto; implementar protótipo e testes |
 | P1 | Provisionar Neon dedicado | Bloqueada | Avaliar capacidade do plano e confirmar ausência de duplicidade |
 | P1 | Migrar Flutter sem perda de dados | Pendente | Depende de API, autenticação e homologação |
