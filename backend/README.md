@@ -58,3 +58,19 @@ A organização conectada possui projetos separados para `thiagocanali-hub`, `mo
 3. P1: implementar camada HTTP autenticada sem expor credenciais.
 4. P1: mapear integralmente campos Firestore e regras de exclusão de dados.
 5. P1: testar concorrência de registro de doses e idempotência.
+
+## Lote: camada de dados autenticada (15/11/2026)
+
+- `src/medications.cjs`: protótipo de camada de dados, com identidade UUID validada, `BEGIN` / `set_config(..., true)` / `COMMIT`, rollback e liberação da conexão em `finally`.
+- Funções: listagem limitada a 100 registros, criação e alteração de nome. **Não é uma API HTTP e não autentica sessões**; o chamador deverá fornecer identidade já verificada.
+- `tests/medications.test.cjs`: testes de validação, isolamento do parâmetro de identidade, rollback e queries parametrizadas, integrados à CI.
+- `tests/dose_write_rls.sql`: integrado à CI PostgreSQL para verificar rejeição de escrita cruzada.
+- Nenhuma integração com Neon, alteração de produção ou migração de dados foi realizada.
+
+### Pendências seguintes
+
+1. Verificar CI do commit atual e corrigir falhas.
+2. Integrar testes PostgreSQL com papel real de aplicação e concorrência.
+3. Implementar autenticação independente, gestão segura de sessões e endpoints HTTP.
+4. Reconciliar contratos de doses e dados legados antes da migração.
+5. Avaliar criação de projeto Neon isolado e plano de migração com rollback.
