@@ -79,7 +79,7 @@ test('owner can confirm a dose once; logs cannot be changed', async () => {
   const payload = {
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
-    recordedAt: require('firebase/firestore').serverTimestamp(),
+    recordedAt: require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp(),
   };
   await assertSucceeds(ref.set(payload));
   await assertSucceeds(ref.get());
@@ -93,7 +93,7 @@ test('another user and unauthenticated clients cannot confirm a dose', async () 
   const payload = {
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
-    recordedAt: require('firebase/firestore').serverTimestamp(),
+    recordedAt: require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp(),
   };
   await assertFails(env.authenticatedContext('bob').firestore().doc(path).set(payload));
   await assertFails(env.unauthenticatedContext().firestore().doc(path).set(payload));
@@ -105,11 +105,11 @@ test('dose logs reject invalid occurrence ID and future schedule', async () => {
   await assertFails(root.collection('doseLogs').doc('invalid-id').set({
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
-    recordedAt: require('firebase/firestore').serverTimestamp(),
+    recordedAt: require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp(),
   }));
   await assertFails(root.collection('doseLogs').doc('20261115T1000').set({
     status: 'taken',
     scheduledFor: new Date(Date.now() + 3_600_000),
-    recordedAt: require('firebase/firestore').serverTimestamp(),
+    recordedAt: require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp(),
   }));
 });
