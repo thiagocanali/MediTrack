@@ -8,7 +8,13 @@ class DoseOccurrence {
 
   final DateTime scheduledFor;
 
-  String get id => scheduledFor.toUtc().millisecondsSinceEpoch.toString();
+  String get id {
+    final utc = scheduledFor.toUtc();
+    if (utc.microsecond != 0 || utc.millisecond != 0) {
+      throw const FormatException('A ocorrência deve ter precisão de segundos.');
+    }
+    return utc.millisecondsSinceEpoch.toString();
+  }
 
   static DateTime parseId(String id) {
     if (!RegExp(r'^[0-9]{13}$').hasMatch(id)) {
