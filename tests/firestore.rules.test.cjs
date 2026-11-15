@@ -75,7 +75,7 @@ test('malformed medication is rejected', async () => {
 
 test('owner can confirm a dose once; logs cannot be changed', async () => {
   const ref = env.authenticatedContext('alice').firestore()
-    .doc('users/alice/medications/med-1/doseLogs/20261115T0800');
+    .doc('users/alice/medications/med-1/doseLogs/1763200000000');
   const payload = {
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
@@ -89,7 +89,7 @@ test('owner can confirm a dose once; logs cannot be changed', async () => {
 });
 
 test('another user and unauthenticated clients cannot confirm a dose', async () => {
-  const path = 'users/alice/medications/med-1/doseLogs/20261115T0900';
+  const path = 'users/alice/medications/med-1/doseLogs/1763200060000';
   const payload = {
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
@@ -107,7 +107,7 @@ test('dose logs reject invalid occurrence ID and future schedule', async () => {
     scheduledFor: new Date(Date.now() - 60_000),
     recordedAt: require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp(),
   }));
-  await assertFails(root.collection('doseLogs').doc('20261115T1000').set({
+  await assertFails(root.collection('doseLogs').doc('1763200120000').set({
     status: 'taken',
     scheduledFor: new Date(Date.now() + 3_600_000),
     recordedAt: require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp(),
@@ -118,17 +118,17 @@ test('dose logs reject forged timestamp, unsupported status and extra fields', a
   const root = env.authenticatedContext('alice').firestore()
     .doc('users/alice/medications/med-1');
   const serverTimestamp = require('firebase/compat/app').default.firestore.FieldValue.serverTimestamp();
-  await assertFails(root.collection('doseLogs').doc('20261115T1100').set({
+  await assertFails(root.collection('doseLogs').doc('1763200180000').set({
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
     recordedAt: new Date(Date.now() - 60_000),
   }));
-  await assertFails(root.collection('doseLogs').doc('20261115T1200').set({
+  await assertFails(root.collection('doseLogs').doc('1763200240000').set({
     status: 'missed',
     scheduledFor: new Date(Date.now() - 60_000),
     recordedAt: serverTimestamp,
   }));
-  await assertFails(root.collection('doseLogs').doc('20261115T1300').set({
+  await assertFails(root.collection('doseLogs').doc('1763200300000').set({
     status: 'taken',
     scheduledFor: new Date(Date.now() - 60_000),
     recordedAt: serverTimestamp,
