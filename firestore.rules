@@ -77,27 +77,3 @@ service cloud.firestore {
     }
   }
 }
-)
-            && allowedKeys(['status', 'scheduledFor', 'recordedAt'])
-            && requiredKeys(['status', 'scheduledFor', 'recordedAt'])
-            && request.resource.data.status == 'taken'
-            && request.resource.data.scheduledFor is timestamp
-            && request.resource.data.recordedAt == request.time
-            && request.resource.data.scheduledFor <= request.time
-            && request.resource.data.scheduledFor > request.time - duration.value(30, 'd');
-          allow update, delete: if false;
-        }
-      }
-
-      // Sensitive features remain inaccessible until dedicated schema,
-      // consent and rule tests are implemented.
-      match /{document=**} {
-        allow read, write: if false;
-      }
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
