@@ -43,5 +43,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f backend/migrations/0002_medication_name_limit.sql
       - name: Verify integrity constraints
         run: psql -v ON_ERROR_STOP=1 -f backend/tests/integrity_smoke.sql
+      - name: Verify cross-user dose writes
+        run: psql -v ON_ERROR_STOP=1 -f backend/tests/dose_write_rls.sql
       - name: Verify user isolation
         run: psql -v ON_ERROR_STOP=1 -f backend/tests/rls_smoke.sql
