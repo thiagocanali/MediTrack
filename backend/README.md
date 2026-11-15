@@ -26,3 +26,19 @@ A CI executa `backend/migrations/0001_initial.sql` em PostgreSQL 16 descartável
 2. Isolamento de `dose_logs`, inclusive ausência de identidade e rollback.
 3. Testes da API para cadastro, login, logout e acesso não autorizado.
 4. Teste de concorrência de confirmações duplicadas.
+
+
+## Inventário Neon em 15/11/2026
+
+A organização conectada possui projetos separados para `thiagocanali-hub`, `monsys`, `cleanair-gestao`, `pokemon-tracker`, `pagino`, `conectados-em-cristo`, `taskdesk` e `meaprovae`. **Não foi identificado projeto Neon específico para MediTrack.** Nenhum projeto novo foi criado para evitar consumo não avaliado da cota. Os testes seguem executados em PostgreSQL descartável do GitHub Actions.
+
+## Acompanhamento
+
+| Prioridade | Tarefa | Estado | Evidência / próxima ação |
+| --- | --- | --- | --- |
+| P0 | Validar schema e RLS em PostgreSQL isolado | Em andamento | PR #13; acompanhar CI do HEAD |
+| P0 | Revisar isolamento e duplicidade das doses | Em andamento | Testes RLS e índice único; ampliar casos |
+| P1 | Inventariar contratos legados Firebase | Pendente | Mapear telas, campos e migração |
+| P1 | Projetar backend de autenticação independente | Pendente | Implementar protótipo e testes sem produção |
+| P1 | Provisionar Neon dedicado | Bloqueada | Avaliar capacidade do plano e confirmar ausência de duplicidade |
+| P1 | Migrar Flutter sem perda de dados | Pendente | Depende de API, autenticação e homologação |
