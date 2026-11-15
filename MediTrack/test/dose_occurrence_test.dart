@@ -22,6 +22,12 @@ void main() {
     expect(DoseOccurrence.parseId(id), date);
   });
 
+  test('rejects subsecond scheduled times', () {
+    final date = DateTime.utc(2026, 11, 15, 11, 30, 0, 1);
+    expect(() => DoseOccurrence(scheduledFor: date).id,
+        throwsFormatException);
+  });
+
   test('rejects invalid IDs', () {
     expect(() => DoseOccurrence.parseId('invalid'), throwsFormatException);
     expect(() => DoseOccurrence.parseId('-1'), throwsFormatException);
