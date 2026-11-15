@@ -26,3 +26,8 @@ linter:
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+# Flutter 3.50 temporarily deprecates material.dart pending material_ui migration.
+analyzer:
+  errors:
+    deprecated_member_use: ignore

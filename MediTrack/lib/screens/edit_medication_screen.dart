@@ -42,10 +42,10 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
     setState(() => _busy = true);
     try {
       await _doc.update({'name': name, 'updatedAt': FieldValue.serverTimestamp()});
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) { Navigator.of(context).pop(); }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível atualizar.')));
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível atualizar.'))); }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -70,10 +70,10 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
     setState(() => _busy = true);
     try {
       await _doc.delete();
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) { Navigator.of(context).pop(); }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível excluir.')));
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível excluir.'))); }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
