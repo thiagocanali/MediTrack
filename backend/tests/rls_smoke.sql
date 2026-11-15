@@ -21,4 +21,26 @@ BEGIN
     RAISE EXCEPTION 'Bob can see Alice medication';
   END IF;
 END $$;
+-- A different user must not be able to insert into Alice's account.
+DO $
+BEGIN
+  BEGIN
+    INSERT INTO medications(id,user_id,name) VALUES
+      ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+       '11111111-1111-4111-8111-111111111111','Forbidden');
+    RAISE EXCEPTION 'Cross-user insert unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END $;
+-- A different user must not be able to modify or delete hidden rows.
+DO $
+BEGIN
+  UPDATE medications SET name = 'tampered'
+    WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  IF FOUND THEN RAISE EXCEPTION 'Cross-user update succeeded'; END IF;
+  DELETE FROM medications
+    WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  IF FOUND THEN RAISE EXCEPTION 'Cross-user delete succeeded'; END IF;
+END $;
 ROLLBACK;
