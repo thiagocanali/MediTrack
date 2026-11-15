@@ -53,7 +53,7 @@ service cloud.firestore {
           allow get, list: if owner(uid);
           allow create: if owner(uid)
             && logId.size() == 13
-            && logId.matches('[0-9]{8}T[0-9]{4}')
+            && logId.matches('[0-9]{13}')
             && allowedKeys(['status', 'scheduledFor', 'recordedAt'])
             && requiredKeys(['status', 'scheduledFor', 'recordedAt'])
             && request.resource.data.status == 'taken'
