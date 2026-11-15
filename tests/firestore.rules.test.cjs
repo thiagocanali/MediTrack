@@ -113,3 +113,25 @@ test('dose logs reject invalid occurrence ID and future schedule', async () => {
     recordedAt: require('firebase/compat/firestore').default.firestore.FieldValue.serverTimestamp(),
   }));
 });
+
+test('dose logs reject forged timestamp, unsupported status and extra fields', async () => {
+  const root = env.authenticatedContext('alice').firestore()
+    .doc('users/alice/medications/med-1');
+  const serverTimestamp = require('firebase/compat/firestore').default.firestore.FieldValue.serverTimestamp();
+  await assertFails(root.collection('doseLogs').doc('20261115T1100').set({
+    status: 'taken',
+    scheduledFor: new Date(Date.now() - 60_000),
+    recordedAt: new Date(Date.now() - 60_000),
+  }));
+  await assertFails(root.collection('doseLogs').doc('20261115T1200').set({
+    status: 'missed',
+    scheduledFor: new Date(Date.now() - 60_000),
+    recordedAt: serverTimestamp,
+  }));
+  await assertFails(root.collection('doseLogs').doc('20261115T1300').set({
+    status: 'taken',
+    scheduledFor: new Date(Date.now() - 60_000),
+    recordedAt: serverTimestamp,
+    notes: 'unexpected',
+  }));
+});
