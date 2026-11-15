@@ -51,9 +51,34 @@ service cloud.firestore {
 
         match /doseLogs/{logId} {
           allow get, list: if owner(uid);
-          // Dose log writes intentionally denied until the occurrence ID,
-          // timestamp and transition validation contract is implemented.
-          allow create, update, delete: if false;
+          // Create-only log: a deterministic occurrence ID prevents the
+          // same scheduled dose being confirmed twice. No client-side edits.
+          allow create: if owner(uid)
+            && logId.matches('^[0-9]{8}T[0-9]{4}
+        }
+      }
+
+      // Sensitive features remain inaccessible until dedicated schema,
+      // consent and rule tests are implemented.
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+)
+            && allowedKeys(['status', 'scheduledFor', 'recordedAt'])
+            && requiredKeys(['status', 'scheduledFor', 'recordedAt'])
+            && request.resource.data.status == 'taken'
+            && request.resource.data.scheduledFor is timestamp
+            && request.resource.data.recordedAt == request.time
+            && request.resource.data.scheduledFor <= request.time
+            && request.resource.data.scheduledFor > request.time - duration.value(30, 'd');
+          allow update, delete: if false;
         }
       }
 
