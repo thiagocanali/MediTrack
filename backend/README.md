@@ -74,3 +74,19 @@ A organização conectada possui projetos separados para `thiagocanali-hub`, `mo
 3. Implementar autenticação independente, gestão segura de sessões e endpoints HTTP.
 4. Reconciliar contratos de doses e dados legados antes da migração.
 5. Avaliar criação de projeto Neon isolado e plano de migração com rollback.
+
+## Lote seguinte: HTTP handler (não é autenticação)
+
+- `src/http.cjs`: handler HTTP sem dependência de framework, com GET/POST/PATCH para medicamentos, limites de payload, respostas sem detalhes internos e autenticação injetada via `authenticate(req)`.
+- **Bloqueio explícito:** nenhum provedor de sessão está implementado. O handler não deve ser exposto publicamente até integrar autenticação real, rate limiting, TLS no host e proteção CSRF quando aplicável. O callback de autenticação é uma fronteira obrigatória, não um mecanismo pronto.
+- `tests/http.test.cjs`: cobre rejeição sem sessão, identidade derivada do autenticador e tentativa de enviar `accountId` no corpo.
+- Workflow passa a executar todos os arquivos `backend/tests/*.test.cjs`.
+- Node HTTP handler e testes ainda aguardam CI do HEAD. Não foi possível executar Node local nesta sessão; validação delegada à CI.
+
+### Próximas tarefas prioritárias
+
+1. Confirmar CI do HEAD e corrigir falhas.
+2. Escolher e implementar provedor de autenticação com sessões revogáveis e integração Flutter; manter o handler fechado até então.
+3. Implementar rate limiting, CORS allowlist e limites de requisição no servidor de produção/homologação.
+4. Completar endpoints de doses, paginação e atualização de estado ativo.
+5. Fazer integração PostgreSQL real apenas em banco de teste Neon após aprovação do plano/custo; nenhuma credencial deve entrar no cliente.
