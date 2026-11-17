@@ -90,3 +90,10 @@ A organização conectada possui projetos separados para `thiagocanali-hub`, `mo
 3. Implementar rate limiting, CORS allowlist e limites de requisição no servidor de produção/homologação.
 4. Completar endpoints de doses, paginação e atualização de estado ativo.
 5. Fazer integração PostgreSQL real apenas em banco de teste Neon após aprovação do plano/custo; nenhuma credencial deve entrar no cliente.
+
+## Revisão de CI — 16/11/2026
+
+- A execução #43751476980 falhou na etapa Node: 6 testes passaram e 2 testes HTTP retornaram 422 em vez de 200/201.
+- Detectado desvio de branch: `backend/src/http.cjs` e `backend/tests/http.test.cjs` haviam sido criados inadvertidamente em `flutcode`, e não na branch de feature. Os arquivos foram adicionados também à branch `feat/neon-schema-foundation`, com mensagens de erro mais informativas para diagnosticar a próxima execução.
+- **Não houve reversão nem modificação destrutiva da branch base.** Revisar posteriormente os commits de `flutcode` para evitar duplicação ao integrar a PR.
+- Próxima ação: consultar a CI do HEAD `edc91d63`, analisar o corpo do erro 422, corrigir e executar novamente. Não declarar testes aprovados sem confirmação.
