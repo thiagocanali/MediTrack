@@ -51,9 +51,17 @@ service cloud.firestore {
 
         match /doseLogs/{logId} {
           allow get, list: if owner(uid);
-          // Dose log writes intentionally denied until the occurrence ID,
-          // timestamp and transition validation contract is implemented.
-          allow create, update, delete: if false;
+          allow create: if owner(uid)
+            && logId.size() == 13
+            && logId.matches('[0-9]{13}')
+            && allowedKeys(['status', 'scheduledFor', 'recordedAt'])
+            && requiredKeys(['status', 'scheduledFor', 'recordedAt'])
+            && request.resource.data.status == 'taken'
+            && request.resource.data.scheduledFor is timestamp
+            && request.resource.data.recordedAt == request.time
+            && request.resource.data.scheduledFor <= request.time
+            && request.resource.data.scheduledFor > request.time - duration.value(30, 'd');
+          allow update, delete: if false;
         }
       }
 
