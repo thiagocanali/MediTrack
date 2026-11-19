@@ -25,10 +25,10 @@ function createMedicationHandler({ pool, authenticate }) {
   if (!pool || typeof authenticate !== 'function') throw new TypeError('pool and authenticate are required');
   return async function handler(req, res) {
     try {
-      if (!req.url.startsWith('/api/v1/medications')) return send(res, 404, { error: { code: 'NOT_FOUND' } });
+      const url = new URL(req.url, 'http://localhost');
+      if (url.pathname !== '/api/v1/medications' && !/^\/api\/v1\/medications\/[0-9a-f-]{36}$/i.test(url.pathname)) return send(res, 404, { error: { code: 'NOT_FOUND' } });
       const session = await authenticate(req);
       if (!session || typeof session.accountId !== 'string') return send(res, 401, { error: { code: 'UNAUTHENTICATED' } });
-      const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/api/v1/medications' && req.method === 'GET') {
         return send(res, 200, { items: await listMedications(pool, session.accountId) });
       }
