@@ -35,17 +35,15 @@ jobs:
       PGDATABASE: meditrack_test
     steps:
       - uses: actions/checkout@v4
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Test Node data layer
         run: node --test backend/tests/*.test.cjs
       - name: Apply schema
-        run: psql -v ON_ERROR_STOP=1 -f backend/migrations/0001_initial.sql
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/migrations/0001_initial.sql
       - name: Apply name limit migration
-        run: psql -v ON_ERROR_STOP=1 -f backend/migrations/0002_medication_name_limit.sql
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/migrations/0002_medication_name_limit.sql
       - name: Verify integrity constraints
-        run: psql -v ON_ERROR_STOP=1 -f backend/tests/integrity_smoke.sql
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/tests/integrity_smoke.sql
       - name: Verify cross-user dose writes
-        run: psql -v ON_ERROR_STOP=1 -f backend/tests/dose_write_rls.sql
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/tests/dose_write_rls.sql
       - name: Verify user isolation
-        run: psql -v ON_ERROR_STOP=1 -f backend/tests/rls_smoke.sql
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/tests/rls_smoke.sql
