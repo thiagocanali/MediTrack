@@ -1,0 +1,49 @@
+name: PostgreSQL schema and RLS
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/postgres-schema.yml'
+  push:
+    branches: [flutcode]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/postgres-schema.yml'
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: meditrack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: meditrack_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Node data layer
+        run: node --test backend/tests/*.test.cjs
+      - name: Apply schema
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/migrations/0001_initial.sql
+      - name: Apply name limit migration
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/migrations/0002_medication_name_limit.sql
+      - name: Verify integrity constraints
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/tests/integrity_smoke.sql
+      - name: Verify cross-user dose writes
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/tests/dose_write_rls.sql
+      - name: Verify user isolation
+        run: docker run --rm --network host -v "${{ github.workspace }}:/workspace:ro" -w /workspace -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16 psql -v ON_ERROR_STOP=1 -f backend/tests/rls_smoke.sql

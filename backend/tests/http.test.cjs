@@ -11,6 +11,7 @@ function poolStub() {
     async connect() {
       return { async query(sql, params) {
         calls.push({ sql, params });
+        if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK' || sql.startsWith('SELECT set_config')) return { rows: [] };
         return { rows: sql.startsWith('SELECT id') ? [{ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Meds' }] : [{ id: params[0], name: params[2] }] };
       }, release() {} };
     },
