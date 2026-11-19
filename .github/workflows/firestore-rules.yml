@@ -16,6 +16,11 @@ on:
       - 'tests/**'
       - '.github/workflows/firestore-rules.yml'
 
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   rules:
     runs-on: ubuntu-latest
@@ -23,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
