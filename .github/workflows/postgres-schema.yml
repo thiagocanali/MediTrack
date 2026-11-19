@@ -11,6 +11,9 @@ on:
       - '.github/workflows/postgres-schema.yml'
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   postgres:
     runs-on: ubuntu-latest
@@ -35,6 +38,9 @@ jobs:
       PGDATABASE: meditrack_test
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Test Node data layer
         run: node --test backend/tests/*.test.cjs
       - name: Apply schema

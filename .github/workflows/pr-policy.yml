@@ -1,0 +1,28 @@
+name: PR policy
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+permissions:
+  contents: read
+concurrency:
+  group: pr-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pull request scope
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          title = os.environ.get('PR_TITLE', '').strip()
+          body = os.environ.get('PR_BODY', '').strip()
+          if len(title) < 12:
+              sys.exit('PR title must have at least 12 characters')
+          if not body:
+              sys.exit('PR body must describe the change and validation')
+          print('PR metadata validated')
+          PY
