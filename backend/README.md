@@ -97,3 +97,18 @@ A organização conectada possui projetos separados para `thiagocanali-hub`, `mo
 - Detectado desvio de branch: `backend/src/http.cjs` e `backend/tests/http.test.cjs` haviam sido criados inadvertidamente em `flutcode`, e não na branch de feature. Os arquivos foram adicionados também à branch `feat/neon-schema-foundation`, com mensagens de erro mais informativas para diagnosticar a próxima execução.
 - **Não houve reversão nem modificação destrutiva da branch base.** Revisar posteriormente os commits de `flutcode` para evitar duplicação ao integrar a PR.
 - Próxima ação: consultar a CI do HEAD `edc91d63`, analisar o corpo do erro 422, corrigir e executar novamente. Não declarar testes aprovados sem confirmação.
+
+## Correção da CI — 19/11/2026
+
+- Causa identificada para os HTTP 422 no mock: `poolStub.query` acessava `params[0]` em consultas `BEGIN` sem parâmetros, produzindo `TypeError` antes das operações de dados. Corrigido em `tests/http.test.cjs`.
+- Corrigido também o roteamento por prefixo para usar `URL.pathname` e correspondência exata, evitando rotas indevidas.
+- A PR #13 foi consultada e aparece com `mergeable=false`; revisar divergência/conflito com `flutcode` antes de qualquer merge. Nenhum merge ou rebase forçado realizado.
+- Verificar se a CI dispara para o novo HEAD; sem resultado confirmado, não declarar aprovação.
+
+### Próximas cinco ações
+
+1. Confirmar a execução da CI do HEAD e corrigir qualquer falha restante.
+2. Investigar e resolver conflito de merge sem descartar alterações da branch base.
+3. Criar testes de rotas inválidas e PATCH sem acesso.
+4. Implementar autenticação real e revogação de sessões em ambiente isolado.
+5. Expandir contratos de dose, paginação e migração Firebase com rollback.
